@@ -1,11 +1,10 @@
 "use client"
 
-import {useToast } from '@/hooks/use-toast'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-
+import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -42,14 +41,20 @@ const formSchema = z.object({
   url: z.string().url({
     message: "Zadejte prosím platnou URL adresu.",
   }),
-  sector: z.enum(["online_gambling", "sexual_content", "pyrotechnics", "weapons", "smoking"]),
-  integrationMethod: z.enum(["api", "modal", "sdk"]),
-  contractType: z.enum(["two_year", "no_contract"]),
-})
+  sector: z.enum(["online_gambling", "sexual_content", "pyrotechnics", "firearms", "tobacco", "alcohol", "adult_content", "chemicals", "other"], {
+    required_error: "Vyberte sektor produktů.",
+  }),
+  integrationMethod: z.enum(["api", "modal", "sdk"], {
+    required_error: "Vyberte metodu integrace.",
+  }),
+  contractType: z.enum(["two_year", "no_contract"], {
+    required_error: "Vyberte typ smlouvy.",
+  }),
+});
 
 export function AddEshopDialog() {
-  const [open, setOpen] = useState(false)
-    const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,52 +62,59 @@ export function AddEshopDialog() {
     defaultValues: {
       name: "",
       url: "",
-      sector: "online_gambling",
+      sector: "other",
       integrationMethod: "api",
-      contractType: "two_year",
+      contractType: "no_contract",
     },
-  })
+  });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-      try {
-          if(user?.uid) {
-              const token = await user.getIdToken();
-              const response = await fetch('/api/addEshop', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`
-                  },
-                  body: JSON.stringify({ data: { ...values, companyId: user.uid } })
-              });
-              if (response.ok) {
-                  toast({
-                      title: "E-shop přidán",
-                      description: `E-shop ${values.name} byl úspěšně přidán.`,
-                  });
-                  setOpen(false);
-              } else {
-                  const errorData = await response.json();
-                  toast({
-                      variant: "destructive",
-                      title: "Chyba",
-                      description: `Nepodařilo se přidat e-shop: ${errorData.error}`,
-                  });
-              }
-          } else {
-              toast({
-                  variant: "destructive",
-                  title: "Chyba",
-                  description: "Uživatel není přihlášen",
-              });
-          }
-      } catch (error: any) {
-            toast({
-                variant: "destructive",
-                title: "Chyba",
-                description: `Nepodařilo se přidat e-shop: ${error.message}`,
-            });
+    try {
+      if (user?.uid) {
+        const token = await user.getIdToken();
+        const response = await fetch('/api/addEshop', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            data: {
+              ...values,
+              companyId: user.uid
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          toast({
+            title: "E-shop přidán",
+            description: `E-shop ${values.name} byl úspěšně přidán. API klíč: ${data.apiKey}`,
+          });
+          setOpen(false);
+        } else {
+          const errorData = await response.json();
+          toast({
+            variant: "destructive",
+            title: "Chyba",
+            description: `Nepodařilo se přidat e-shop: ${errorData.error}`,
+          });
+        }
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Chyba",
+          description: "Uživatel není přihlášen",
+        });
       }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Chyba",
+        description: `Nepodařilo se přidat e-shop: ${error.message}`,
+      });
+    }
   }
 
   return (
@@ -167,8 +179,12 @@ export function AddEshopDialog() {
                       <SelectItem value="online_gambling">Online hazardní hry</SelectItem>
                       <SelectItem value="sexual_content">Obsah pro dospělé</SelectItem>
                       <SelectItem value="pyrotechnics">Pyrotechnika</SelectItem>
-                      <SelectItem value="weapons">Zbraně</SelectItem>
-                      <SelectItem value="smoking">Tabákové výrobky</SelectItem>
+                      <SelectItem value="firearms">Zbraně</SelectItem>
+                      <SelectItem value="tobacco">Tabákové výrobky</SelectItem>
+                      <SelectItem value="alcohol">Alkohol</SelectItem>
+                      <SelectItem value="adult_content">Pornografie</SelectItem>
+                      <SelectItem value="chemicals">Chemikálie a nebezpečné látky</SelectItem>
+                      <SelectItem value="other">Jiné</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>

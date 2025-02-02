@@ -1,5 +1,12 @@
+// app/api/getWalletBalance/route.ts
 import { NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+  });
+}
 
 export async function POST(request: Request) {
   const authorizationHeader = request.headers.get('Authorization');
@@ -7,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Authorization header is missing' }, { status: 401 });
   }
 
-  const token = authorizationHeader.split(' ')[1];
+  const token = authorizationHeader.split(' '); 
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
@@ -16,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL}/getWalletBalance`, {
+    const response = await fetch(`${process.env.FIREBASE_FUNCTIONS_URL}/getWalletBalance`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,12 +33,11 @@ export async function POST(request: Request) {
 
     const responseData = await response.json();
     if (!response.ok) {
-      return NextResponse.json({ message: 'Failed to fetch wallet balance', error: responseData.error }, { status: 500 });
+      return NextResponse.json({ message: 'Failed to fetch wallet balance', error: responseData.error }, { status: response.status });
     }
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error: any) {
-    console.error('Error verifying token:', error);
-    return NextResponse.json({ message: 'Failed to verify token', error: error.message }, { status: 401 });
+    return NextResponse.json({ message: 'Failed to verify token or fetch wallet balance', error: error.message, stack: error.stack }, { status: 500 });
   }
 }

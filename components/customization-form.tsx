@@ -30,7 +30,7 @@
     import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
     import { Preview } from "@/components/preview"
     import { db } from "@/lib/firebase";
-    import { collection, query, getDocs, doc, updateDoc } from "firebase/firestore";
+    import { collection, query, getDocs, doc, updateDoc, where } from "firebase/firestore";
     import { useAuth } from "@/contexts/AuthContext";
 
 

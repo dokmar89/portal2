@@ -1,3 +1,4 @@
+// app/api/getMethodRatio/route.ts
 import { NextResponse } from 'next/server';
 import * as admin from 'firebase-admin';
 
@@ -7,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Authorization header is missing' }, { status: 401 });
   }
 
-  const token = authorizationHeader.split(' ')[1];
+  const token = authorizationHeader.split(' '); 
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
@@ -31,7 +32,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error: any) {
-    console.error('Error verifying token:', error);
     return NextResponse.json({ message: 'Failed to verify token', error: error.message }, { status: 401 });
   }
 }

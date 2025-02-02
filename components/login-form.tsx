@@ -1,7 +1,7 @@
+// app/components/login-form.tsx
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -32,7 +32,7 @@ const formSchema = z.object({
 export function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
-    const { login, isAuthenticated } = useAuth();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,16 +45,11 @@ export function LoginForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
-
     try {
-        await login(values.email, values.password);
-        router.push("/dashboard");
-    } catch (error: any) {
-      toast({
-        title: "Přihlášení selhalo",
-          description: error.message || "Neplatné přihlašovací údaje",
-        variant: "destructive",
-      })
+      await login(values.email, values.password);
+      // Přesměrování je prováděno uvnitř funkce login
+    } catch (error) {
+      // Chyba je již ošetřena v login funkci
     } finally {
       setIsLoading(false)
     }

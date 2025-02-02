@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase';
 import * as admin from 'firebase-admin';
 
+// Inicializace Firebase Admin SDK - jen pokud neexistuje
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
+
 export async function POST(request: Request) {
   const authorizationHeader = request.headers.get('Authorization');
   if (!authorizationHeader) {

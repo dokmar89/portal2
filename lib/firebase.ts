@@ -1,42 +1,24 @@
 // Firebase configuration for Admin Portal, Plugin, and Client Portal
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD18bBpRgOZZJAHsGKDdRa7lUHdhl71RcI",
-  authDomain: "ageverificationservice.firebaseapp.com",
-  projectId: "ageverificationservice",
-  storageBucket: "ageverificationservice.firebasestorage.app",
-  messagingSenderId: "587819983449",
-  appId: "1:587819983449:web:584037cb5ba7a9bb2a0748",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
+}
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-// Registration-related utilities
-export const registerUser = async (email: string, password: string) => {
-  try {
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-// Login-related utilities
-export const loginUser = async (email: string, password: string) => {
-  try {
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-// For Plugin-specific needs, we can add custom Firestore collections or Auth rules here
-
-// For Client Portal-specific needs, extend configuration or utilities as required

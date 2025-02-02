@@ -1,37 +1,36 @@
 import { NextResponse } from 'next/server';
-import * as admin from 'firebase-admin';
 
 export async function POST(request: Request) {
-  const authorizationHeader = request.headers.get('Authorization');
-  if (!authorizationHeader) {
-    return NextResponse.json({ message: 'Authorization header is missing' }, { status: 401 });
-  }
-
-  const token = authorizationHeader.split(' ')[1];
-
   try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    if (!decodedToken) {
-      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
-    }
-
     const data = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_FIREBASE_FUNCTIONS_URL}/getTransactionHistory`, {
+    const authHeader = request.headers.get('Authorization') || '';
+    const firebaseFunctionsUrl = process.env.FIREBASE_FUNCTIONS_URL;
+    if (!firebaseFunctionsUrl) {
+      throw new Error('Firebase Functions URL není definováno.');
+    }
+    const response = await fetch(`${firebaseFunctionsUrl}/getTransactionHistory`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': authHeader,
       },
       body: JSON.stringify(data),
     });
-
-    const responseData = await response.json();
-    if (!response.ok) {
-      return NextResponse.json({ message: 'Failed to fetch transaction history', error: responseData.error }, { status: 500 });
+    const responseText = await response.text();
+    try {
+      const responseData = JSON.parse(responseText);
+      console.log("Response from getTransactionHistory function:", responseData);
+      if (!response.ok) {
+        console.error("Failed to fetch transaction history:", responseData);
+        return NextResponse.json(responseData, { status: response.status });
+      }
+      return NextResponse.json(responseData);
+    } catch (jsonError) {
+      console.error("Chyba při parsování JSON z getTransactionHistory:", responseText);
+      return NextResponse.json({ error: "Odpověď není validní JSON", details: responseText }, { status: 500 });
     }
-
-    return NextResponse.json(responseData, { status: 200 });
   } catch (error: any) {
-    console.error('Error verifying token:', error);
-    return NextResponse.json({ message: 'Failed to verify token', error: error.message }, { status: 401 });
+    console.error("Error in getTransactionHistory route:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
